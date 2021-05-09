@@ -529,6 +529,6 @@ db.set(`${message.author.id}-messages`, messages)
    
 })
 
-client.login('Nzc2OTI5NjkwMDE4NjQ0MDE4.X68CKA.8H4l-oAlplGNsJDc6MVVbB8-zBg')
+client.login(config.token)
 
 
