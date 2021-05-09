@@ -1,0 +1,15 @@
+{
+"token": "",
+"prefix": "!",
+"logchannelid": "",
+"moderatorroleid": "",
+"maincategoryid": "",
+"mainguildid(Can only create threads in main server)": "",
+"embedcolour": "",
+"openmessage": "Thank you for your message! Our mod team will reply to you here as soon as possible.",
+"pinguponopen": false,
+
+
+"To move the thread to a different category than the main category - Put Category Name followed by the ID e.g": "////////",
+"Category_Name": "Category_ID"
+}
