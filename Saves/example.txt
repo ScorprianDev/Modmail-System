@@ -1,0 +1,4 @@
+Opened Wednesday, June 15th 2022, 3:33:34 pm
+[Client] username#discrim => test
+[Client] username#discrim => This is a test thread
+[Staff] username#discrim => Test thread
