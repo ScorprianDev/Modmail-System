@@ -31,6 +31,7 @@ Modmail Bot For Discord
 **15/06/2022**  
 -> Added ability to cancel threads  
 -> Updates Readme file  
+-> Added ``Saves`` Folder  
 
 
 
