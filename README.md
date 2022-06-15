@@ -25,12 +25,10 @@ Modmail Bot For Discord
 * Raw - Displays message of embed in codeblock
 * Alert - Will mention you the next time the user messages the thread
 * Sub - Will mention you everytime the user messages the thread
-* Remindme - Will send you a reminder after your specified time has passed | Can be cancelled using ``!remindme cancel``
 
 # Updates
 **15/06/2022**  
 -> Added ability to cancel threads  
--> Updates Readme file  
 -> Added ``Saves`` Folder  
 
 
