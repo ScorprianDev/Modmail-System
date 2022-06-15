@@ -28,9 +28,9 @@ Modmail Bot For Discord
 * Remindme - Will send you a reminder after your specified time has passed | Can be cancelled using ``!remindme cancel``
 
 # Updates
-**15/06/2022**
--> Added ability to cancel threads
--> Updates Readme file
+**15/06/2022**  
+-> Added ability to cancel threads  
+-> Updates Readme file  
 
 
 
