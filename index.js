@@ -1,6 +1,6 @@
 const Discord = require('discord.js')
 const fs = require('fs')
-const client = new Discord.Client()
+const client = new Discord.Client({intents: 37379})
 const ms = require('ms')
 const config = require('./config.json')
 const JSONdb = require('simple-json-db')
@@ -9,9 +9,12 @@ const { inspect } = require('util')
 const db = new JSONdb('./Databases/db.sqlite')
 const snippetdb = new JSONdb('./Databases/snippets.sqlite')
 client.on('ready', () => {
+  client.guilds.cache.get(config.mainguildid).members.fetch().then(() => console.log(`Succesfully cached all members`))
     console.log(`Logged in as ${client.user.tag}`)
+
 })
 const prefix = config.prefix;
+
 
 
 
@@ -22,7 +25,7 @@ const prefix = config.prefix;
 client.on('guildMemberRemove', member => {
 
   if(client.channels.cache.find(c => c.topic === member.id)){
-    client.channels.cache.find(c => c.topic === member.id).send(new Discord.MessageEmbed().setDescription('User has left the server'))
+    client.channels.cache.find(c => c.topic === member.id).send({embeds: [new Discord.MessageEmbed().setDescription('User has left the server')]})
   }
 })
 
@@ -50,13 +53,13 @@ if(config.prefix === undefined) return console.error('CONFIG ERROR: Prefix has n
 			channel.setParent(config.maincategoryid)
 			channel.setTopic(message.author.id)
       if(config.pinguponopen){
-        channel.send('@here')
+        channel.send({content: '@here'})
       }
-        channel.send(new Discord.MessageEmbed().setDescription(`**${message.author.tag}**(${message.author.id}) was created ${checkDays(message.author.createdAt)}, joined ${checkDays(client.guilds.cache.get(config.mainguildid).members.cache.get(message.author.id).joinedAt)}\n\n**Roles**:\n${client.guilds.cache.get(config.mainguildid).members.cache.get(message.author.id).roles.cache.map(c => `\`\`${c.name}\`\``).join('  ┊  ')}`).setColor(config.embedcolour))
-		  channel.send(new Discord.MessageEmbed().setAuthor(message.author.tag, message.author.displayAvatarURL()).setDescription(message.content).setFooter(`Message ID: ${message.id}`).setTimestamp().setColor(config.embedcolour))
+        channel.send({embeds: [new Discord.MessageEmbed().setDescription(`**${message.author.tag}**(${message.author.id}) was created ${checkDays(message.author.createdAt)}, joined ${checkDays(client.guilds.cache.get(config.mainguildid).members.cache.get(message.author.id).joinedAt)}\n\n**Roles**:\n${client.guilds.cache.get(config.mainguildid).members.cache.get(message.author.id).roles.cache.map(c => `\`\`${c.name}\`\``).join('  ┊  ')}`).setColor(config.embedcolour)]})
+		  channel.send({embeds: [new Discord.MessageEmbed().setAuthor(message.author.tag, message.author.displayAvatarURL()).setDescription(message.content).setFooter(`Message ID: ${message.id}`).setTimestamp().setColor(config.embedcolour)]})
 		  const threadmake = new Discord.MessageEmbed()
 		  .setDescription('**Thank your for your message.** A member of our staff team will be with you __shortly__. Until then, feel free to explain your `query`, `issue` or anything else we can help with today. Your patience is __appreciated__.').setColor(config.embedcolour)
-	message.author.send(threadmake)
+	message.author.send({embeds: [threadmake]})
   db.set(message.author.id, {"Alert": [], "Sub": []})
   db.set(`${message.author.id}-messages`, [])
 		  })
@@ -105,9 +108,8 @@ if(config.prefix === undefined) return console.error('CONFIG ERROR: Prefix has n
     .addField('ID', `Displays User's Client ID. To display a User's ID, use ${prefix}id`)
     .addField('Raw', `Will display content of embed in a codeblock for copying. To get the raw output of an embed, use ${prefix}raw <message_id>`)
     .addField('Alert/Sub', `Will ping user on message. Alert pings for next message; Sub pings for all messages until they unsub. To get alerted or sub to a channel, use ${prefix}alert, ${prefix}sub or ${prefix}unsub`)
-    .addField('Remindme', `Will remind user in a specified time period to do a specified action. To remind yourself, use ${prefix}remindme <time_period> <action>`)
     .setColor(config.embedcolour)
-    message.channel.send(embed)
+    message.channel.send({embeds: [embed]})
     
     
   } 
@@ -118,23 +120,13 @@ if(config.prefix === undefined) return console.error('CONFIG ERROR: Prefix has n
   
   
   
-  else if(message.content.toLowerCase().startsWith(prefix + "remindme")){
-    const time = args[0]
-    const reminder = message.content.split(" ").splice(2).join(" ")
-    if(!time) return message.channel.send(`${prefix}remindme <time> <reminder>`)
-    if(!reminder) return message.channel.send(`${prefix}remindme <time> <reminder>`)
-    if(isNaN(ms(time)) === true) return message.channel.send('Time must evaluate to a number e.g 5s, 5m etc.')
-    message.channel.send(`You will be reminded in ${args[0]} for \`\`${reminder}\`\``)
-    setTimeout(() => {
-      message.reply(reminder)
-    }, ms(time))
-  }else if(message.content.toLowerCase() === prefix + "alert"){
+  else if(message.content.toLowerCase() === prefix + "alert"){
     const member = await client.users.cache.get(message.channel.topic)
     if(!member) return;
 
 const notifs = db.get(message.channel.topic)
 notifs["Alert"].push(message.author.id)
-message.channel.send('You will be alerted on the next message')
+message.channel.send({content: 'You will be alerted on the next message'})
     
     
   }else if(message.content.toLowerCase() === prefix + "sub"){
@@ -143,7 +135,7 @@ message.channel.send('You will be alerted on the next message')
 
 const notifs = db.get(message.channel.topic)
 notifs["Sub"].push(message.author.id)
-message.channel.send('You will be alerted for every message')
+message.channel.send({content: 'You will be alerted for every message'})
     
     
   }else if(message.content.toLowerCase() === prefix + "unsub"){
@@ -158,16 +150,16 @@ const index = subs.indexOf(message.author.id);
       const alerts = db.get(message.channel.topic)["Alert"]
       db.set(message.author.id, {"Alert": alerts, "Sub": subs})
       
-message.channel.send('You will no longer be alerted')
+message.channel.send({content: 'You will no longer be alerted'})
     
     
   }else if(message.content.toLowerCase().startsWith(prefix + "raw")){
-    if(!args[0]) return message.channel.send('Missing Arguments')
+    if(!args[0]) return message.channel.send({content: 'Missing Arguments'})
     const messages = message.channel.messages.cache.get(args[0])
-    if(!messages) return message.channel.send('Unable to find message')
-    if(messages.embeds.length === 0) return message.channel.send('Message you specified does not contain an embed')
+    if(!messages) return message.channel.send({content: 'Unable to find message'})
+    if(messages.embeds.length === 0) return message.channel.send({content: 'Message you specified does not contain an embed'})
     messages.embeds.forEach(embed => {
-      message.channel.send(`\`\`\`\n${embed.description}\n\`\`\``)
+      message.channel.send({content: `\`\`\`\n${embed.description}\n\`\`\``})
     })
     
   }else if(message.content.toLowerCase().startsWith(prefix + 'ar') || message.content.toLowerCase().startsWith(prefix + 'r') || message.content.toLowerCase().startsWith(prefix + 'reply')){
@@ -175,14 +167,15 @@ message.channel.send('You will no longer be alerted')
     if(!member) return;
     const punctuationless = member.username.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"")
     const finalname = punctuationless.replace(/\s{2,}/g," ");
-    if(message.channel.name.includes(finalname.toLowerCase()) === false && message.channel.name.includes(member.discriminator) === false) return;    	const reply = args.join(" ")
-		if(!reply) return message.channel.send('Argument is missing')
+    if(message.channel.name.includes(finalname.toLowerCase()) === false && message.channel.name.includes(member.discriminator) === false) return;    	
+    const reply = args.join(" ")
+		if(!reply) return message.channel.send({content: 'Argument is missing'})
     
-		const sentMessage = await client.users.cache.get(message.channel.topic).send(new Discord.MessageEmbed().setAuthor(message.member.roles.highest.name, client.user.displayAvatarURL()).setDescription(reply).setFooter(`Anonymous Reply`).setColor(config.embedcolour))
+		const sentMessage = await client.users.cache.get(message.channel.topic).send({embeds: [new Discord.MessageEmbed().setAuthor(message.member.roles.highest.name, client.user.displayAvatarURL()).setDescription(reply).setFooter(`Anonymous Reply`).setColor(config.embedcolour)]})
 
 
 		message.delete()
-		const ourmessage = await message.channel.send(new Discord.MessageEmbed().setAuthor(message.author.tag, message.author.displayAvatarURL()).setDescription(reply).setFooter(`Anonymous Reply`).setTimestamp().setColor(config.embedcolour))
+		const ourmessage = await message.channel.send({embeds: [new Discord.MessageEmbed().setAuthor(message.author.tag, message.author.displayAvatarURL()).setDescription(reply).setFooter(`Anonymous Reply`).setTimestamp().setColor(config.embedcolour)]})
 
     if(!db.get(`${message.channel.topic}-messages`)){
       db.set(`${message.channel.topic}-messages`, [{[ourmessage.id]: sentMessage.id}])
@@ -197,7 +190,7 @@ message.channel.send('You will no longer be alerted')
     const punctuationless = member.username.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"")
     const finalname = punctuationless.replace(/\s{2,}/g," ");
     if(message.channel.name.includes(finalname.toLowerCase()) === false && message.channel.name.includes(member.discriminator) === false) return; 
-    if(!args[0]) return message.channel.send('Please Supply Message ID')
+    if(!args[0]) return message.channel.send({content: 'Please Supply Message ID'})
     const messages = db.get(`${message.channel.topic}-messages`)
     let Successful;
     for(i = 0; i < messages.length; i++){
@@ -270,7 +263,7 @@ if(message.channel.name.includes(finalname.toLowerCase()) === false && message.c
        db.delete(`${message.channel.topic}-messages`)
       
 	   } else {
-		  const sentMessage = await message.channel.send(new Discord.MessageEmbed().setDescription(`Closing in ${args[0]}`).setColor(config.embedcolour))
+		  const sentMessage = await message.channel.send({embeds: [new Discord.MessageEmbed().setDescription(`Closing in ${args[0]}`).setColor(config.embedcolour)]})
 		   setTimeout(() => {
 			   sentMessage.edit(new Discord.MessageEmbed().setDescription(`Closing...`).setColor(config.embedcolour))
 		   }, ms(args[0]) - 1000)
@@ -314,7 +307,8 @@ if(message.channel.name.includes(finalname.toLowerCase()) === false && message.c
     if(!member) return;
     const punctuationless = member.username.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"")
 const finalname = punctuationless.replace(/\s{2,}/g," ");
-if(message.channel.name.includes(finalname.toLowerCase()) === false && message.channel.name.includes(member.discriminator) === false) return;     message.channel.send(new Discord.MessageEmbed().setDescription(`User ID: ${message.channel.topic}`).setColor(config.embedcolour))
+if(message.channel.name.includes(finalname.toLowerCase()) === false && message.channel.name.includes(member.discriminator) === false) return;     
+message.channel.send({embeds: [new Discord.MessageEmbed().setDescription(`User ID: ${message.channel.topic}`).setColor(config.embedcolour)]})
   }
   else if(message.content.toLowerCase().startsWith(prefix + 'move')){
     const member = await client.users.cache.get(message.channel.topic)
@@ -322,9 +316,9 @@ if(message.channel.name.includes(finalname.toLowerCase()) === false && message.c
   const punctuationless = member.username.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"")
 const finalname = punctuationless.replace(/\s{2,}/g," ");
 if(message.channel.name.includes(finalname.toLowerCase()) === false && message.channel.name.includes(member.discriminator) === false) return;   
-          if(!args[0]) return message.channel.send('Missing arguments')
+          if(!args[0]) return message.channel.send({content: 'Missing arguments'})
     const category = config[args[0].toLowerCase()] || client.channels.cache.get(args[0])
-    if(!category) return message.channel.send('Category not found')
+    if(!category) return message.channel.send({content: 'Category not found'})
     message.channel.setParent(category)
     message.react('✅')
 
@@ -335,21 +329,21 @@ if(message.channel.name.includes(finalname.toLowerCase()) === false && message.c
 else if(message.content.toLowerCase().startsWith(prefix + 'newthread')){
   if(message.member.roles.cache.has(config.moderatorroleid) || message.member.hasPermission('ADMINISTRATOR')){ 
   const member = client.users.cache.get(args[0])
-if(!member) return message.channel.send(new Discord.MessageEmbed().setDescription(prefix + 'newthread <member_id>').setColor(config.embedcolour)) 
+if(!member) return message.channel.send({embeds: [new Discord.MessageEmbed().setDescription(prefix + 'newthread <member_id>').setColor(config.embedcolour)]}) 
  if(!client.guilds.cache.get(config.inboxguildid).channels.cache.find(c => c.topic === member.id)){
 client.guilds.cache.get(config.inboxguildid).channels.create(`${member.username.toLowerCase()}#${member.discriminator}`).then(channel => {
     channel.setParent(config.maincategoryid)
     channel.setTopic(member.id)
-    channel.send(new Discord.MessageEmbed().setDescription(`**${member.tag}**(${member.id}) was created ${checkDays(member.createdAt)}, joined ${checkDays(client.guilds.cache.get(config.mainguildid).members.cache.get(member.id).joinedAt)}\n\n**Roles**:\n${client.guilds.cache.get(config.mainguildid).members.cache.get(member.id).roles.cache.map(c => `\`\`${c.name}\`\``).join('  ┊  ')}`).setColor(config.embedcolour))
-    channel.send(new Discord.MessageEmbed().setDescription(`Opened by ${message.author.tag}`).setColor(config.embedcolour))
+    channel.send({embeds: [new Discord.MessageEmbed().setDescription(`**${member.tag}**(${member.id}) was created ${checkDays(member.createdAt)}, joined ${checkDays(client.guilds.cache.get(config.mainguildid).members.cache.get(member.id).joinedAt)}\n\n**Roles**:\n${client.guilds.cache.get(config.mainguildid).members.cache.get(member.id).roles.cache.map(c => `\`\`${c.name}\`\``).join('  ┊  ')}`).setColor(config.embedcolour)]})
+    channel.send({embeds: [new Discord.MessageEmbed().setDescription(`Opened by ${message.author.tag}`).setColor(config.embedcolour)]})
           db.set(member.id, {"Alert": [], "Sub": []})
           message.react('✅')
-          message.reply(new Discord.MessageEmbed().setDescription(`Created thread: <#${channel.id}>`).setColor(config.embedcolour))
+          message.reply({embeds: [new Discord.MessageEmbed().setDescription(`Created thread: <#${channel.id}>`).setColor(config.embedcolour)]})
 
 })
 
 } else {
-  return message.channel.send(`There is already a thread open for ${member.tag}`)
+  return message.channel.send({content: `There is already a thread open for ${member.tag}`})
 }
 
   } else {
@@ -390,106 +384,60 @@ if(message.channel.name.includes(finalname.toLowerCase()) === false && message.c
  message.react('✅')
   
 }else if(message.content.toLowerCase().startsWith(prefix + "snippets")){
-  if(!args[0]) return message.channel.send('View | Add | Remove | List | Edit | Raw')
+  if(!args[0]) return message.channel.send({content: 'View | Add | Remove | List | Edit | Raw'})
   if(args[0] === "view" || args[0] === "View"){
-    if(!args[1]) return message.channel.send('Supply a snippet name')
-    if(snippetdb.get(args[1]) === undefined) return message.channel.send('Snippet not found')
+    if(!args[1]) return message.channel.send({content: 'Supply a snippet name'})
+    if(snippetdb.get(args[1]) === undefined) return message.channel.send({content: 'Snippet not found'})
     const embed = new Discord.MessageEmbed()
   .setTitle(`Snippet - '${args[1]}':`)
   .setDescription(snippetdb.get(args[1]))
   .setColor(config.embedcolour)
-  message.channel.send(embed)
+  message.channel.send({embeds: [embed]})
   } else if(args[0] === "add" || args[0] === "Add"){
     if(!message.member.roles.cache.has(config['moderatorroleid'])) return;
     const content = message.content.split(" ").splice(3).join(" ")
-    if(args[1] === undefined || content === undefined) return message.channel.send(`${prefix}snippet add <trigger> <content>`)
+    if(args[1] === undefined || content === undefined) return message.channel.send({content: `${prefix}snippet add <trigger> <content>`})
     snippetdb.set(args[1], content)
     const snippets = snippetdb.get('snippets')
-    if(snippets.includes(args[1])) return message.channel.send('Snippet already exists')
+    if(snippets.includes(args[1])) return message.channel.send({content: 'Snippet already exists'})
     snippets.push(args[1])
     snippetdb.set('snippets', snippets)
-    message.channel.send(`Snippet ${args[1]} added.`)
+    message.channel.send({content: `Snippet ${args[1]} added.`})
   } else if(args[0] === "remove" || args[0] === "Remove"){
     if(!message.member.roles.cache.has(config['moderatorroleid'])) return;
-      if(args[1] === undefined) return message.channel.send(`${prefix}snippet remove <trigger>`)
+      if(args[1] === undefined) return message.channel.send({content: `${prefix}snippet remove <trigger>`})
       snippetdb.delete(args[1])
       const snippets = snippetdb.get('snippets')
-      if(!snippets.includes(args[1])) return message.channel.send('Snippet does not exist')
+      if(!snippets.includes(args[1])) return message.channel.send({content: 'Snippet does not exist'})
       const index = snippets.indexOf(args[1]);
       if (index > -1) {
         snippets.splice(index, 1);
       }
       db.set('snippets', snippets)
-      message.channel.send(`Snippet ${args[1]} removed.`)
+      message.channel.send({content: `Snippet ${args[1]} removed.`})
     
   } else if(args[0] === "list" || args[0] === "List"){
     const embed = new Discord.MessageEmbed()
     .setAuthor('List of snippets')
     .setDescription(snippetdb.get('snippets').join('\n'))
-    message.channel.send(embed)
+    message.channel.send({embeds: [embed]})
 
   } else if(args[0] === "edit"   || args[0] === "Edit"){
     if(!message.member.roles.cache.has(config['moderatorroleid'])) return;
     const content = message.content.split(" ").splice(3).join(" ")
-if(args[1] === undefined || content === undefined) return message.channel.send(`${prefix}snippets edit <trigger> <content>`)
-if(snippetdb.get(args[1]) === undefined) return message.channel.send('Snippet does not exist')
+if(args[1] === undefined || content === undefined) return message.channel.send({content: `${prefix}snippets edit <trigger> <content>`})
+if(snippetdb.get(args[1]) === undefined) return message.channel.send({content: 'Snippet does not exist'})
 snippetdb.set(args[1], content)
-message.channel.send(`Snippet ${args[1]} edited.`)
+message.channel.send({content: `Snippet ${args[1]} edited.`})
   } else if(args[0] === "raw" || args[0] === "Raw"){
     if(!message.member.roles.cache.has(config['moderatorroleid'])) return;
     const content = message.content.split(" ").splice(3).join(" ")
-    if(args[1] === undefined || content === undefined) return message.channel.send(`${prefix}snippets raw <trigger>`)
-    if(snippetdb.get(args[1]) === undefined) return message.channel.send('Snippet does not exist')
-message.channel.send(`\`\`\`\n${snippetdb.get(args[1])}\n\`\`\``)
+    if(args[1] === undefined || content === undefined) return message.channel.send({content: `${prefix}snippets raw <trigger>`})
+    if(snippetdb.get(args[1]) === undefined) return message.channel.send({content: 'Snippet does not exist'})
+message.channel.send({content: `\`\`\`\n${snippetdb.get(args[1])}\n\`\`\``})
   }
   
   
-  }else if (message.content.toLowerCase().startsWith(prefix + 'eval')) {
-    if (message.author.id !== '381710555096023061') return message.reply('You do not have permission to use this command!')
-    let code = args.join(" ");
-    code.replace(/client/, "serverclient")
-    const noargseval = new Discord.MessageEmbed()
-        .setDescription('Please specify your arguments')
-    if (!code) return message.channel.send(noargseval)
-    const token = client.token.split("").join("[^]{0,2}");
-    const rev = client.token.split("").reverse().join("[^]{0,2}");
-    const filter = new RegExp(`${token}|${rev}`, "g");
-    try {
-        let output = eval(code);
-        if (output instanceof Promise || (Boolean(output) && typeof output.then === "function" && typeof output.catch === "function")) output = await output;
-        output = inspect(output, { depth: 0, maxArrayLength: null });
-        output = output.replace(filter, "[TOKEN]");
-        output = clean(output);
-        if (output.length < 1950) {
-            const outputembed = new Discord.MessageEmbed()
-                .setTitle('Evaluation Successful')
-                .setDescription('**Argument**\n\`\`\`' + code + '\`\`\`\n\n**Output**\n\`\`\`' + output + '\`\`\`')
-                .setFooter('RBD Servers', client.user.displayAvatarURL())
-            message.channel.send(outputembed);
-        }
-  
-        else {
-            message.channel.send(`${output}`, { split: "\n", code: "js" });
-        }
-    } catch (error) {
-        message.channel.send(`The following error occured \`\`\`js\n${error}\`\`\``);
-    }
-  
-    function clean(text) {
-        return text
-            .replace(/`/g, "`" + String.fromCharCode(8203))
-            .replace(/@/g, "@" + String.fromCharCode(8203));
-    }
-  }else if(message.content.toLowerCase().startsWith(prefix + "remindme")){
-    const time = args[0]
-    const reminder = message.content.split(" ").splice(2).join(" ")
-    if(!time) return message.channel.send(`${prefix}remindme <time> <reminder>`)
-    if(!reminder) return message.channel.send(`${prefix}remindme <time> <reminder>`)
-    if(isNaN(ms(time)) === true) return message.channel.send('Time must evaluate to a number e.g 5s, 5m etc.')
-    message.channel.send(`You will be reminded in ${args[0]} for \`\`${reminder}\`\``)
-    setTimeout(() => {
-      message.reply(reminder)
-    }, ms(time))
   }
 
 
@@ -510,9 +458,9 @@ if(message.channel.name.includes(finalname.toLowerCase()) === false && message.c
   if(message.content.toLowerCase().substring(prefix.length) === undefined) return;
   if(snippetdb.get(message.content.toLowerCase().substring(prefix.length)) === undefined) return;
  
- const sentMessage = await client.users.cache.get(message.channel.topic).send(new Discord.MessageEmbed().setAuthor(message.member.roles.highest.name, client.user.displayAvatarURL()).setDescription(snippetdb.get(message.content.toLowerCase().substring(prefix.length))).setFooter(`Anonymous Reply`).setColor(config.embedcolour))
+ const sentMessage = await client.users.cache.get(message.channel.topic).send({embeds: [new Discord.MessageEmbed().setAuthor(message.member.roles.highest.name, client.user.displayAvatarURL()).setDescription(snippetdb.get(message.content.toLowerCase().substring(prefix.length))).setFooter(`Anonymous Reply`).setColor(config.embedcolour)]})
 	message.delete()
-	const ourmessage = await message.channel.send(new Discord.MessageEmbed().setAuthor(message.author.tag, message.author.displayAvatarURL()).setDescription(snippetdb.get(message.content.toLowerCase().substring(1))).setFooter(`Anonymous Reply`).setTimestamp().setColor(config.embedcolour))
+	const ourmessage = await message.channel.send({embeds: [new Discord.MessageEmbed().setAuthor(message.author.tag, message.author.displayAvatarURL()).setDescription(snippetdb.get(message.content.toLowerCase().substring(1))).setFooter(`Anonymous Reply`).setTimestamp().setColor(config.embedcolour)]})
   if(!db.get(`${message.channel.topic}-messages`)){
     db.set(`${message.channel.topic}-messages`, [{[ourmessage.id]: sentMessage.id}])
 } else {
