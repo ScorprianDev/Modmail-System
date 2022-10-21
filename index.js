@@ -327,7 +327,7 @@ if(message.channel.name.includes(finalname.toLowerCase()) === false && message.c
 
     
 else if(message.content.toLowerCase().startsWith(prefix + 'newthread')){
-  if(message.member.roles.cache.has(config.moderatorroleid) || message.member.hasPermission('ADMINISTRATOR')){ 
+  if(message.member.roles.cache.has(config.moderatorroleid) || message.member.permissions.has('ADMINISTRATOR')){ 
   const member = client.users.cache.get(args[0])
 if(!member) return message.channel.send({embeds: [new Discord.MessageEmbed().setDescription(prefix + 'newthread <member_id>').setColor(config.embedcolour)]}) 
  if(!client.guilds.cache.get(config.inboxguildid).channels.cache.find(c => c.topic === member.id)){
